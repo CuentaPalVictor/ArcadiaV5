@@ -1,0 +1,50 @@
+// Reglas de seguridad para Firestore
+// Copia este contenido en Firebase Console > Firestore > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Reglas para la colección 'arcane' (pins de usuarios)
+    match /arcane/{pinId} {
+      // Permitir lectura a todos los usuarios autenticados
+      allow read: if request.auth != null;
+      
+      // Permitir crear pins solo a usuarios autenticados y que sean propietarios
+      allow create: if request.auth != null 
+                    && request.auth.uid == resource.data.authorId
+                    && validatePinData(resource.data);
+      
+      // Permitir actualizar pins (para likes y saves)
+      allow update: if request.auth != null 
+                    && (
+                      // El autor puede editar su pin
+                      request.auth.uid == resource.data.authorId
+                      // O cualquier usuario puede dar like/guardar
+                      || onlyUpdatingLikesOrSaves()
+                    );
+      
+      // Solo el autor puede eliminar sus pins
+      allow delete: if request.auth != null 
+                    && request.auth.uid == resource.data.authorId;
+    }
+    
+    // Reglas para perfiles de usuario (opcional)
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Funciones auxiliares
+    function validatePinData(data) {
+      return data.keys().hasAll(['title', 'imageUrl', 'authorId', 'createdAt'])
+             && data.title is string
+             && data.imageUrl is string
+             && data.authorId is string;
+    }
+    
+    function onlyUpdatingLikesOrSaves() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['likes', 'likeCount', 'saves']);
+    }
+  }
+}

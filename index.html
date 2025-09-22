@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcadia - Pinterest Style</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>Arcadia</h2>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Buscar pins...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="nav-menu">
+                <button id="uploadBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i> Subir
+                </button>
+                <div class="nav-profile">
+                    <a href="profile.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
+                        <img id="userAvatar" src="https://via.placeholder.com/40" alt="Profile" class="avatar">
+                        <span id="userName">Usuario</span>
+                    </a>
+                </div>
+                <button id="logoutBtn" class="btn-secondary">Salir</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Upload Modal -->
+        <div id="uploadModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Subir Nueva Imagen</h2>
+                <form id="uploadForm">
+                    <div class="upload-area">
+                        <input type="file" id="imageInput" accept="image/*" required>
+                        <label for="imageInput">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Haz clic o arrastra una imagen aquí</p>
+                        </label>
+                        <div id="imagePreview"></div>
+                    </div>
+                    <input type="text" id="pinTitle" placeholder="Título del pin" required>
+                    <textarea id="pinDescription" placeholder="Descripción (opcional)"></textarea>
+                    <div class="modal-buttons">
+                        <button type="button" class="btn-secondary" id="cancelUpload">Cancelar</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-upload"></i> Subir Pin
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal active">
+            <div class="modal-content">
+                <h2>Iniciar Sesión</h2>
+                <form id="loginForm">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-primary">Iniciar Sesión</button>
+                </form>
+                <p>¿No tienes cuenta? <a href="#" id="showRegister">Registrarse</a></p>
+            </div>
+        </div>
+
+        <!-- Register Modal -->
+        <div id="registerModal" class="modal">
+            <div class="modal-content">
+                <h2>Registrarse</h2>
+                <form id="registerForm">
+                    <input type="text" id="registerName" placeholder="Nombre completo" required>
+                    <input type="email" id="registerEmail" placeholder="Email" required>
+                    <input type="password" id="registerPassword" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-primary">Crear Cuenta</button>
+                </form>
+                <p>¿Ya tienes cuenta? <a href="#" id="showLogin">Iniciar Sesión</a></p>
+            </div>
+        </div>
+
+        <!-- Pins Grid -->
+        <div class="pins-container">
+            <div id="pinsGrid" class="pins-grid">
+                <!-- Los pins se cargarán dinámicamente aquí -->
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+        </div>
+    </main>
+
+    <!-- Pin Detail Modal -->
+    <div id="pinModal" class="modal">
+        <div class="modal-content pin-detail">
+            <span class="close">&times;</span>
+            <div class="pin-detail-content">
+                <div class="pin-image-container">
+                    <img id="pinDetailImage" src="" alt="">
+                </div>
+                <div class="pin-info">
+                    <h3 id="pinDetailTitle"></h3>
+                    <p id="pinDetailDescription"></p>
+                    <div class="pin-actions">
+                        <button id="likeBtn" class="btn-like">
+                            <i class="far fa-heart"></i>
+                            <span id="likeCount">0</span>
+                        </button>
+                        <button id="saveBtn" class="btn-save">
+                            <i class="far fa-bookmark"></i>
+                            Guardar
+                        </button>
+                    </div>
+                    <div class="pin-author">
+                        <img id="authorAvatar" src="" alt="" class="avatar">
+                        <span id="authorName"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

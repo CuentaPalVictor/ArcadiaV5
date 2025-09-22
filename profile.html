@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Arcadia</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html">
+                    <h2>Arcadia</h2>
+                </a>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Buscar pins...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="nav-menu">
+                <a href="index.html" class="btn-secondary">
+                    <i class="fas fa-home"></i> Inicio
+                </a>
+                <button id="uploadBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i> Subir
+                </button>
+                <div class="nav-profile">
+                    <img id="userAvatar" src="https://via.placeholder.com/40" alt="Profile" class="avatar">
+                    <span id="userName">Usuario</span>
+                </div>
+                <button id="logoutBtn" class="btn-secondary">Salir</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Header -->
+    <main class="main-content">
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar-container">
+                    <img id="profileAvatar" src="https://via.placeholder.com/120" alt="Avatar" class="profile-avatar">
+                    <button id="editAvatarBtn" class="edit-avatar-btn">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="profile-info">
+                    <h1 id="profileName">Nombre del Usuario</h1>
+                    <p id="profileEmail">email@ejemplo.com</p>
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <span id="pinCount" class="stat-number">0</span>
+                            <span class="stat-label">Pins</span>
+                        </div>
+                        <div class="stat">
+                            <span id="likeCount" class="stat-number">0</span>
+                            <span class="stat-label">Me gusta</span>
+                        </div>
+                        <div class="stat">
+                            <span id="saveCount" class="stat-number">0</span>
+                            <span class="stat-label">Guardados</span>
+                        </div>
+                    </div>
+                    <button id="editProfileBtn" class="btn-primary">
+                        <i class="fas fa-edit"></i> Editar perfil
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Tabs -->
+            <div class="profile-tabs">
+                <button id="createdTab" class="tab-btn active">
+                    <i class="fas fa-thumbtack"></i> Mis Pins
+                </button>
+                <button id="savedTab" class="tab-btn">
+                    <i class="fas fa-bookmark"></i> Guardados
+                </button>
+            </div>
+
+            <!-- Profile Content -->
+            <div class="profile-content">
+                <div id="createdPins" class="tab-content active">
+                    <div class="pins-grid" id="myPinsGrid">
+                        <!-- Pins creados por el usuario -->
+                    </div>
+                    <div id="noPinsMessage" class="empty-state" style="display: none;">
+                        <i class="fas fa-thumbtack"></i>
+                        <h3>Aún no has creado ningún pin</h3>
+                        <p>¡Comienza compartiendo tus imágenes favoritas!</p>
+                        <button id="createFirstPin" class="btn-primary">Crear mi primer pin</button>
+                    </div>
+                </div>
+                
+                <div id="savedPins" class="tab-content">
+                    <div class="pins-grid" id="savedPinsGrid">
+                        <!-- Pins guardados por el usuario -->
+                    </div>
+                    <div id="noSavedMessage" class="empty-state" style="display: none;">
+                        <i class="fas fa-bookmark"></i>
+                        <h3>No has guardado ningún pin</h3>
+                        <p>Explora y guarda los pins que más te gusten</p>
+                        <a href="index.html" class="btn-primary">Explorar pins</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Profile Modal -->
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Editar Perfil</h2>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label for="editName">Nombre completo</label>
+                    <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                    <label for="editBio">Biografía</label>
+                    <textarea id="editBio" placeholder="Cuéntanos sobre ti..." maxlength="160"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editWebsite">Sitio web</label>
+                    <input type="url" id="editWebsite" placeholder="https://...">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" id="cancelEdit">Cancelar</button>
+                    <button type="submit" class="btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Upload Modal (reutilizada del index.html) -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Subir Nueva Imagen</h2>
+            <form id="uploadForm">
+                <div class="upload-area">
+                    <input type="file" id="imageInput" accept="image/*" required>
+                    <label for="imageInput">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Haz clic o arrastra una imagen aquí</p>
+                    </label>
+                    <div id="imagePreview"></div>
+                </div>
+                <input type="text" id="pinTitle" placeholder="Título del pin" required>
+                <textarea id="pinDescription" placeholder="Descripción (opcional)"></textarea>
+                <div class="modal-buttons">
+                    <button type="button" class="btn-secondary" id="cancelUpload">Cancelar</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-upload"></i> Subir Pin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pin Detail Modal -->
+    <div id="pinModal" class="modal">
+        <div class="modal-content pin-detail">
+            <span class="close">&times;</span>
+            <div class="pin-detail-content">
+                <div class="pin-image-container">
+                    <img id="pinDetailImage" src="" alt="">
+                </div>
+                <div class="pin-info">
+                    <h3 id="pinDetailTitle"></h3>
+                    <p id="pinDetailDescription"></p>
+                    <div class="pin-actions">
+                        <button id="likeBtn" class="btn-like">
+                            <i class="far fa-heart"></i>
+                            <span id="likeCount">0</span>
+                        </button>
+                        <button id="saveBtn" class="btn-save">
+                            <i class="far fa-bookmark"></i>
+                            Guardar
+                        </button>
+                        <button id="deleteBtn" class="btn-delete" style="display: none;">
+                            <i class="fas fa-trash"></i>
+                            Eliminar
+                        </button>
+                    </div>
+                    <div class="pin-author">
+                        <img id="authorAvatar" src="" alt="" class="avatar">
+                        <span id="authorName"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading">
+        <i class="fas fa-spinner fa-spin"></i>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+    <script type="module" src="js/profile.js"></script>
+</body>
+</html>

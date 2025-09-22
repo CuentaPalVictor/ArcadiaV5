@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication - Arcadia</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background-color: #f7f7f7;
+        }
+        .test-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status { 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            font-weight: bold; 
+        }
+        .success { 
+            background-color: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .error { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .loading { 
+            background-color: #fff3cd; 
+            color: #856404; 
+            border: 1px solid #ffeaa7; 
+        }
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button { 
+            background: #e60023; 
+            color: white; 
+            border: none; 
+            padding: 12px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 5px; 
+            font-size: 14px;
+        }
+        button:hover { 
+            background: #d50017; 
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .user-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 Test de Firebase Authentication - Arcadia</h1>
+    
+    <div class="test-card">
+        <h2>📊 Estado de Authentication</h2>
+        <div id="authStatus" class="status loading">
+            🔄 Verificando Firebase Authentication...
+        </div>
+        <div id="userDetails"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>👤 Registro de Usuario</h2>
+        <div class="auth-form">
+            <input type="text" id="registerName" placeholder="Nombre completo">
+            <input type="email" id="registerEmail" placeholder="Email">
+            <input type="password" id="registerPassword" placeholder="Contraseña (mínimo 6 caracteres)">
+            <button onclick="testRegister()">📝 Crear Usuario</button>
+        </div>
+        <div id="registerResult"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>🔑 Inicio de Sesión</h2>
+        <div class="auth-form">
+            <input type="email" id="loginEmail" placeholder="Email">
+            <input type="password" id="loginPassword" placeholder="Contraseña">
+            <button onclick="testLogin()">🚪 Iniciar Sesión</button>
+            <button onclick="testAnonymousLogin()">👤 Login Anónimo</button>
+        </div>
+        <div id="loginResult"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>🧪 Pruebas Completas</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <button onclick="testFirestoreWithAuth()">🔥 Probar Firestore + Auth</button>
+            <button onclick="createAuthenticatedPin()">📌 Crear Pin Autenticado</button>
+            <button onclick="testPasswordReset()">🔄 Reset Password</button>
+            <button onclick="signOutUser()">🚪 Cerrar Sesión</button>
+        </div>
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>📋 Información del Sistema</h2>
+        <div class="info">
+            <p><strong>Proyecto:</strong> arcadia-113f5</p>
+            <p><strong>Auth Domain:</strong> arcadia-113f5.firebaseapp.com</p>
+            <p><strong>Estado:</strong> <span id="systemStatus">Verificando...</span></p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from './js/firebase-config.js';
+        import { 
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            signInAnonymously,
+            signOut,
+            onAuthStateChanged,
+            updateProfile,
+            sendPasswordResetEmail
+        } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js';
+        import { 
+            collection, 
+            addDoc, 
+            getDocs,
+            serverTimestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js';
+
+        let currentUser = null;
+
+        // Inicializar al cargar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeAuthTest();
+        });
+
+        async function initializeAuthTest() {
+            const authStatus = document.getElementById('authStatus');
+            const systemStatus = document.getElementById('systemStatus');
+            
+            try {
+                // Verificar que Firebase Auth está disponible
+                if (!auth) {
+                    throw new Error('Firebase Auth no está inicializado');
+                }
+
+                authStatus.textContent = '🔄 Configurando listener de autenticación...';
+
+                // Configurar listener de estado de auth
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        currentUser = user;
+                        authStatus.className = 'status success';
+                        authStatus.textContent = '✅ Usuario autenticado';
+                        
+                        document.getElementById('userDetails').innerHTML = `
+                            <div class="user-info">
+                                <h4>👤 Usuario Actual:</h4>
+                                <p><strong>UID:</strong> ${user.uid}</p>
+                                <p><strong>Email:</strong> ${user.email || 'Anónimo'}</p>
+                                <p><strong>Nombre:</strong> ${user.displayName || 'Sin nombre'}</p>
+                                <p><strong>Email Verificado:</strong> ${user.emailVerified ? 'Sí' : 'No'}</p>
+                                <p><strong>Proveedor:</strong> ${user.providerData.length > 0 ? user.providerData[0].providerId : 'anonymous'}</p>
+                                <p><strong>Creado:</strong> ${new Date(user.metadata.creationTime).toLocaleString()}</p>
+                                <p><strong>Último Login:</strong> ${new Date(user.metadata.lastSignInTime).toLocaleString()}</p>
+                            </div>
+                        `;
+                    } else {
+                        currentUser = null;
+                        authStatus.className = 'status info';
+                        authStatus.textContent = '📤 No hay usuario autenticado';
+                        document.getElementById('userDetails').innerHTML = '';
+                    }
+                });
+
+                systemStatus.textContent = '✅ Funcionando correctamente';
+
+            } catch (error) {
+                console.error('Error inicializando Auth:', error);
+                authStatus.className = 'status error';
+                authStatus.textContent = `❌ Error: ${error.message}`;
+                systemStatus.textContent = '❌ Error en el sistema';
+            }
+        }
+
+        // Función para registro
+        window.testRegister = async function() {
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const result = document.getElementById('registerResult');
+
+            if (!email || !password) {
+                result.innerHTML = '<div class="status error">❌ Email y contraseña son requeridos</div>';
+                return;
+            }
+
+            try {
+                result.innerHTML = '<div class="status loading">🔄 Creando usuario...</div>';
+                
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                
+                // Actualizar perfil si se proporcionó nombre
+                if (name) {
+                    await updateProfile(userCredential.user, {
+                        displayName: name
+                    });
+                }
+
+                result.innerHTML = `
+                    <div class="status success">
+                        ✅ Usuario creado exitosamente<br>
+                        <strong>UID:</strong> ${userCredential.user.uid}<br>
+                        <strong>Email:</strong> ${userCredential.user.email}
+                    </div>
+                `;
+
+                // Limpiar campos
+                document.getElementById('registerName').value = '';
+                document.getElementById('registerEmail').value = '';
+                document.getElementById('registerPassword').value = '';
+
+            } catch (error) {
+                console.error('Error en registro:', error);
+                result.innerHTML = `<div class="status error">❌ Error: ${getErrorMessage(error.code)}</div>`;
+            }
+        }
+
+        // Función para login
+        window.testLogin = async function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const result = document.getElementById('loginResult');
+
+            if (!email || !password) {
+                result.innerHTML = '<div class="status error">❌ Email y contraseña son requeridos</div>';
+                return;
+            }
+
+            try {
+                result.innerHTML = '<div class="status loading">🔄 Iniciando sesión...</div>';
+                
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+                result.innerHTML = `
+                    <div class="status success">
+                        ✅ Sesión iniciada exitosamente<br>
+                        <strong>Bienvenido:</strong> ${userCredential.user.displayName || userCredential.user.email}
+                    </div>
+                `;
+
+                // Limpiar campos
+                document.getElementById('loginEmail').value = '';
+                document.getElementById('loginPassword').value = '';
+
+            } catch (error) {
+                console.error('Error en login:', error);
+                result.innerHTML = `<div class="status error">❌ Error: ${getErrorMessage(error.code)}</div>`;
+            }
+        }
+
+        // Login anónimo
+        window.testAnonymousLogin = async function() {
+            const result = document.getElementById('loginResult');
+            
+            try {
+                result.innerHTML = '<div class="status loading">🔄 Iniciando sesión anónima...</div>';
+                
+                const userCredential = await signInAnonymously(auth);
+
+                result.innerHTML = `
+                    <div class="status success">
+                        ✅ Sesión anónima iniciada<br>
+                        <strong>UID:</strong> ${userCredential.user.uid}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error en login anónimo:', error);
+                result.innerHTML = `<div class="status error">❌ Error: ${getErrorMessage(error.code)}</div>`;
+            }
+        }
+
+        // Test Firestore con autenticación
+        window.testFirestoreWithAuth = async function() {
+            const result = document.getElementById('testResults');
+            
+            if (!currentUser) {
+                result.innerHTML = '<div class="status error">❌ Debes estar autenticado para esta prueba</div>';
+                return;
+            }
+
+            try {
+                result.innerHTML = '<div class="status loading">🔄 Probando Firestore con autenticación...</div>';
+                
+                // Intentar leer la colección arcane
+                const snapshot = await getDocs(collection(db, 'arcane'));
+                
+                result.innerHTML = `
+                    <div class="status success">
+                        ✅ Firestore funciona con autenticación<br>
+                        <strong>Usuario:</strong> ${currentUser.email || 'Anónimo'}<br>
+                        <strong>Documentos en 'arcane':</strong> ${snapshot.size}<br>
+                        <strong>Permisos:</strong> Lectura ✅
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error Firestore + Auth:', error);
+                result.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Crear pin autenticado
+        window.createAuthenticatedPin = async function() {
+            const result = document.getElementById('testResults');
+            
+            if (!currentUser) {
+                result.innerHTML = '<div class="status error">❌ Debes estar autenticado para crear pins</div>';
+                return;
+            }
+
+            try {
+                result.innerHTML = '<div class="status loading">🔄 Creando pin autenticado...</div>';
+                
+                const testPin = {
+                    title: `Pin de ${currentUser.displayName || currentUser.email} - ${new Date().toLocaleTimeString()}`,
+                    description: 'Pin de prueba creado con usuario autenticado',
+                    imageUrl: 'https://via.placeholder.com/300x400/e60023/ffffff?text=Auth+Test',
+                    publicId: 'auth_test_' + Date.now(),
+                    authorId: currentUser.uid,
+                    authorName: currentUser.displayName || currentUser.email || 'Usuario Anónimo',
+                    authorAvatar: currentUser.photoURL || 'https://via.placeholder.com/40/e60023/ffffff?text=U',
+                    createdAt: serverTimestamp(),
+                    likes: [],
+                    likeCount: 0,
+                    saves: []
+                };
+
+                const docRef = await addDoc(collection(db, 'arcane'), testPin);
+
+                result.innerHTML = `
+                    <div class="status success">
+                        ✅ Pin creado exitosamente<br>
+                        <strong>Pin ID:</strong> ${docRef.id}<br>
+                        <strong>Autor:</strong> ${testPin.authorName}<br>
+                        <strong>Título:</strong> ${testPin.title}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error creando pin:', error);
+                result.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Reset password
+        window.testPasswordReset = async function() {
+            const email = prompt('Ingresa el email para reset de contraseña:');
+            const result = document.getElementById('testResults');
+            
+            if (!email) return;
+
+            try {
+                result.innerHTML = '<div class="status loading">🔄 Enviando email de reset...</div>';
+                
+                await sendPasswordResetEmail(auth, email);
+
+                result.innerHTML = `
+                    <div class="status success">
+                        ✅ Email de reset enviado<br>
+                        <strong>Enviado a:</strong> ${email}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error reset password:', error);
+                result.innerHTML = `<div class="status error">❌ Error: ${getErrorMessage(error.code)}</div>`;
+            }
+        }
+
+        // Cerrar sesión
+        window.signOutUser = async function() {
+            const result = document.getElementById('testResults');
+            
+            try {
+                await signOut(auth);
+                result.innerHTML = '<div class="status success">✅ Sesión cerrada correctamente</div>';
+                
+            } catch (error) {
+                console.error('Error cerrando sesión:', error);
+                result.innerHTML = `<div class="status error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // Función para mensajes de error amigables
+        function getErrorMessage(errorCode) {
+            switch (errorCode) {
+                case 'auth/email-already-in-use':
+                    return 'Este email ya está registrado';
+                case 'auth/invalid-email':
+                    return 'Email inválido';
+                case 'auth/weak-password':
+                    return 'La contraseña debe tener al menos 6 caracteres';
+                case 'auth/user-not-found':
+                    return 'Usuario no encontrado';
+                case 'auth/wrong-password':
+                    return 'Contraseña incorrecta';
+                case 'auth/too-many-requests':
+                    return 'Demasiados intentos. Intenta más tarde';
+                case 'auth/user-disabled':
+                    return 'Esta cuenta ha sido deshabilitada';
+                case 'auth/operation-not-allowed':
+                    return 'Operación no permitida. Verifica la configuración en Firebase Console';
+                default:
+                    return errorCode || 'Error desconocido';
+            }
+        }
+    </script>
+</body>
+</html>

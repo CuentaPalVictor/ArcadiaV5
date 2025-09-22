@@ -1,89 +1,139 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Welcome to Firebase Hosting</title>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcadia - Pinterest Style</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>Arcadia</h2>
+            </div>
+            <div class="nav-search">
+                <input type="text" id="searchInput" placeholder="Buscar pins...">
+                <i class="fas fa-search"></i>
+            </div>
+            <div class="nav-menu">
+                <button id="uploadBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i> Subir
+                </button>
+                <div class="nav-profile">
+                    <a href="profile.html" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit;">
+                        <img id="userAvatar" src="https://via.placeholder.com/40" alt="Profile" class="avatar">
+                        <span id="userName">Usuario</span>
+                    </a>
+                </div>
+                <button id="logoutBtn" class="btn-secondary">Salir</button>
+            </div>
+        </div>
+    </nav>
 
-    <!-- update the version number as needed -->
-    <script defer src="/__/firebase/12.3.0/firebase-app-compat.js"></script>
-    <!-- include only the Firebase features as you need -->
-    <script defer src="/__/firebase/12.3.0/firebase-auth-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-database-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-firestore-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-functions-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-messaging-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-storage-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-analytics-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-remote-config-compat.js"></script>
-    <script defer src="/__/firebase/12.3.0/firebase-performance-compat.js"></script>
-    <!-- 
-      initialize the SDK after all desired features are loaded, set useEmulator to false
-      to avoid connecting the SDK to running emulators.
-    -->
-    <script defer src="/__/firebase/init.js?useEmulator=true"></script>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Upload Modal -->
+        <div id="uploadModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Subir Nueva Imagen</h2>
+                <form id="uploadForm">
+                    <div class="upload-area">
+                        <input type="file" id="imageInput" accept="image/*" required>
+                        <label for="imageInput">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Haz clic o arrastra una imagen aquí</p>
+                        </label>
+                        <div id="imagePreview"></div>
+                    </div>
+                    <input type="text" id="pinTitle" placeholder="Título del pin" required>
+                    <textarea id="pinDescription" placeholder="Descripción (opcional)"></textarea>
+                    <div class="modal-buttons">
+                        <button type="button" class="btn-secondary" id="cancelUpload">Cancelar</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-upload"></i> Subir Pin
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-    <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
-      #message { background: white; max-width: 360px; margin: 100px auto 16px; padding: 32px 24px; border-radius: 3px; }
-      #message h2 { color: #ffa100; font-weight: bold; font-size: 16px; margin: 0 0 8px; }
-      #message h1 { font-size: 22px; font-weight: 300; color: rgba(0,0,0,0.6); margin: 0 0 16px;}
-      #message p { line-height: 140%; margin: 16px 0 24px; font-size: 14px; }
-      #message a { display: block; text-align: center; background: #039be5; text-transform: uppercase; text-decoration: none; color: white; padding: 16px; border-radius: 4px; }
-      #message, #message a { box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24); }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
-      @media (max-width: 600px) {
-        body, #message { margin-top: 0; background: white; box-shadow: none; }
-        body { border-top: 16px solid #ffa100; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="message">
-      <h2>Welcome</h2>
-      <h1>Firebase Hosting Setup Complete</h1>
-      <p>You're seeing this because you've successfully setup Firebase Hosting. Now it's time to go build something extraordinary!</p>
-      <a target="_blank" href="https://firebase.google.com/docs/hosting/">Open Hosting Documentation</a>
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal active">
+            <div class="modal-content">
+                <h2>Iniciar Sesión</h2>
+                <form id="loginForm">
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <input type="password" id="loginPassword" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-primary">Iniciar Sesión</button>
+                </form>
+                <p>¿No tienes cuenta? <a href="#" id="showRegister">Registrarse</a></p>
+            </div>
+        </div>
+
+        <!-- Register Modal -->
+        <div id="registerModal" class="modal">
+            <div class="modal-content">
+                <h2>Registrarse</h2>
+                <form id="registerForm">
+                    <input type="text" id="registerName" placeholder="Nombre completo" required>
+                    <input type="email" id="registerEmail" placeholder="Email" required>
+                    <input type="password" id="registerPassword" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-primary">Crear Cuenta</button>
+                </form>
+                <p>¿Ya tienes cuenta? <a href="#" id="showLogin">Iniciar Sesión</a></p>
+            </div>
+        </div>
+
+        <!-- Pins Grid -->
+        <div class="pins-container">
+            <div id="pinsGrid" class="pins-grid">
+                <!-- Los pins se cargarán dinámicamente aquí -->
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+        </div>
+    </main>
+
+    <!-- Pin Detail Modal -->
+    <div id="pinModal" class="modal">
+        <div class="modal-content pin-detail">
+            <span class="close">&times;</span>
+            <div class="pin-detail-content">
+                <div class="pin-image-container">
+                    <img id="pinDetailImage" src="" alt="">
+                </div>
+                <div class="pin-info">
+                    <h3 id="pinDetailTitle"></h3>
+                    <p id="pinDetailDescription"></p>
+                    <div class="pin-actions">
+                        <button id="likeBtn" class="btn-like">
+                            <i class="far fa-heart"></i>
+                            <span id="likeCount">0</span>
+                        </button>
+                        <button id="saveBtn" class="btn-save">
+                            <i class="far fa-bookmark"></i>
+                            Guardar
+                        </button>
+                    </div>
+                    <div class="pin-author">
+                        <img id="authorAvatar" src="" alt="" class="avatar">
+                        <span id="authorName"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <p id="load">Firebase SDK Loading&hellip;</p>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const loadEl = document.querySelector('#load');
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-        // // The Firebase SDK is initialized and available here!
-        //
-        // firebase.auth().onAuthStateChanged(user => { });
-        // firebase.database().ref('/path/to/ref').on('value', snapshot => { });
-        // firebase.firestore().doc('/foo/bar').get().then(() => { });
-        // firebase.functions().httpsCallable('yourFunction')().then(() => { });
-        // firebase.messaging().requestPermission().then(() => { });
-        // firebase.storage().ref('/path/to/ref').getDownloadURL().then(() => { });
-        // firebase.analytics(); // call to activate
-        // firebase.analytics().logEvent('tutorial_completed');
-        // firebase.performance(); // call to activate
-        //
-        // // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
-
-        try {
-          let app = firebase.app();
-          let features = [
-            'auth', 
-            'database', 
-            'firestore',
-            'functions',
-            'messaging', 
-            'storage', 
-            'analytics', 
-            'remoteConfig',
-            'performance',
-          ].filter(feature => typeof app[feature] === 'function');
-          loadEl.textContent = `Firebase SDK loaded with ${features.join(', ')}`;
-        } catch (e) {
-          console.error(e);
-          loadEl.textContent = 'Error loading the Firebase SDK, check the console.';
-        }
-      });
-    </script>
-  </body>
+    <!-- Firebase SDKs -->
+    <script type="module" src="js/firebase-config.js"></script>
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+    <script type="module" src="js/app.js"></script>
+</body>
 </html>

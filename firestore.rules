@@ -1,5 +1,5 @@
-// Reglas de seguridad para Firestore
-// Copia este contenido en Firebase Console > Firestore > Rules
+// Reglas de seguridad para Firestore - ACTUALIZADO para Authentication
+// Despliega estas reglas con: firebase deploy --only firestore:rules
 
 rules_version = '2';
 service cloud.firestore {
@@ -10,15 +10,15 @@ service cloud.firestore {
       // Permitir lectura a todos los usuarios autenticados
       allow read: if request.auth != null;
       
-      // Permitir crear pins solo a usuarios autenticados y que sean propietarios
+      // Permitir crear pins solo a usuarios autenticados
       allow create: if request.auth != null 
-                    && request.auth.uid == resource.data.authorId
-                    && validatePinData(resource.data);
+                    && request.auth.uid == request.resource.data.authorId
+                    && validatePinData(request.resource.data);
       
       // Permitir actualizar pins (para likes y saves)
       allow update: if request.auth != null 
                     && (
-                      // El autor puede editar su pin
+                      // El autor puede editar su pin completamente
                       request.auth.uid == resource.data.authorId
                       // O cualquier usuario puede dar like/guardar
                       || onlyUpdatingLikesOrSaves()

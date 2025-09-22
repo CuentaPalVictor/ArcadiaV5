@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación Firebase - Arcadia</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .status { padding: 15px; margin: 10px 0; border-radius: 5px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { background: #e60023; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #d50017; }
+    </style>
+</head>
+<body>
+    <h1>🔥 Verificación de Conexión Firebase</h1>
+    
+    <div id="firebaseStatus" class="status loading">
+        🔄 Verificando conexión con Firebase...
+    </div>
+    
+    <div id="firestoreStatus" class="status loading">
+        🔄 Verificando Firestore y colección 'arcane'...
+    </div>
+    
+    <button onclick="testConnection()">🧪 Probar Conexión</button>
+    <button onclick="createTestPin()">📌 Crear Pin de Prueba</button>
+    <button onclick="viewCollection()">👁️ Ver Colección Arcane</button>
+    
+    <div id="details" style="margin-top: 20px;"></div>
+
+    <script type="module">
+        import { auth, db } from './js/firebase-config.js';
+        import { 
+            signInAnonymously,
+            onAuthStateChanged 
+        } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js';
+        import { 
+            collection, 
+            addDoc, 
+            getDocs,
+            serverTimestamp 
+        } from 'https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js';
+
+        let currentUser = null;
+
+        // Verificar conexión automáticamente al cargar
+        document.addEventListener('DOMContentLoaded', async () => {
+            await testFirebaseConnection();
+        });
+
+        async function testFirebaseConnection() {
+            const firebaseStatus = document.getElementById('firebaseStatus');
+            const firestoreStatus = document.getElementById('firestoreStatus');
+            const details = document.getElementById('details');
+
+            try {
+                // Test 1: Firebase inicialización
+                firebaseStatus.textContent = '🔄 Conectando con Firebase Auth...';
+                
+                // Autenticación anónima
+                const userCredential = await signInAnonymously(auth);
+                currentUser = userCredential.user;
+                
+                firebaseStatus.className = 'status success';
+                firebaseStatus.textContent = '✅ Firebase Auth conectado correctamente';
+
+                // Test 2: Firestore y colección arcane
+                firestoreStatus.textContent = '🔄 Verificando Firestore...';
+                
+                const arcaneCollection = collection(db, 'arcane');
+                const snapshot = await getDocs(arcaneCollection);
+                
+                firestoreStatus.className = 'status success';
+                firestoreStatus.textContent = `✅ Firestore conectado. Colección 'arcane': ${snapshot.size} documentos`;
+
+                // Mostrar detalles
+                details.innerHTML = `
+                    <div class="status success">
+                        <h3>🎉 Conexión Exitosa!</h3>
+                        <p><strong>Usuario ID:</strong> ${currentUser.uid}</p>
+                        <p><strong>Proyecto:</strong> ${db.app.options.projectId}</p>
+                        <p><strong>Auth Domain:</strong> ${auth.config.authDomain}</p>
+                        <p><strong>Documentos en 'arcane':</strong> ${snapshot.size}</p>
+                        <p><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error:', error);
+                
+                if (firebaseStatus.textContent.includes('🔄')) {
+                    firebaseStatus.className = 'status error';
+                    firebaseStatus.textContent = `❌ Error Firebase Auth: ${error.message}`;
+                }
+                
+                if (firestoreStatus.textContent.includes('🔄')) {
+                    firestoreStatus.className = 'status error';
+                    firestoreStatus.textContent = `❌ Error Firestore: ${error.message}`;
+                }
+
+                details.innerHTML = `
+                    <div class="status error">
+                        <h3>❌ Error de Conexión</h3>
+                        <p><strong>Código:</strong> ${error.code || 'Desconocido'}</p>
+                        <p><strong>Mensaje:</strong> ${error.message}</p>
+                        <p><strong>Sugerencia:</strong> Verifica las credenciales en firebase-config.js</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function createTestPin() {
+            if (!currentUser) {
+                alert('❌ Primero debes conectarte a Firebase');
+                return;
+            }
+
+            try {
+                const testPin = {
+                    title: 'Pin de Prueba - ' + new Date().toLocaleTimeString(),
+                    description: 'Este es un pin de prueba para verificar la conexión con Firestore',
+                    imageUrl: 'https://via.placeholder.com/300x400/e60023/ffffff?text=Test+Pin',
+                    publicId: 'test_pin_' + Date.now(),
+                    authorId: currentUser.uid,
+                    authorName: 'Usuario de Prueba',
+                    authorAvatar: 'https://via.placeholder.com/40/e60023/ffffff?text=U',
+                    createdAt: serverTimestamp(),
+                    likes: [],
+                    likeCount: 0,
+                    saves: []
+                };
+
+                const docRef = await addDoc(collection(db, 'arcane'), testPin);
+                
+                alert(`✅ Pin de prueba creado exitosamente!\nID: ${docRef.id}`);
+                
+                // Actualizar contador
+                await testFirebaseConnection();
+
+            } catch (error) {
+                console.error('Error creando pin:', error);
+                alert(`❌ Error creando pin: ${error.message}`);
+            }
+        }
+
+        async function viewCollection() {
+            try {
+                const snapshot = await getDocs(collection(db, 'arcane'));
+                let content = '<h3>📊 Contenido de la colección "arcane":</h3>';
+                
+                if (snapshot.empty) {
+                    content += '<p>La colección está vacía.</p>';
+                } else {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        content += `
+                            <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                                <p><strong>ID:</strong> ${doc.id}</p>
+                                <p><strong>Título:</strong> ${data.title || 'Sin título'}</p>
+                                <p><strong>Autor:</strong> ${data.authorName || 'Anónimo'}</p>
+                                <p><strong>Likes:</strong> ${data.likeCount || 0}</p>
+                                <p><strong>Fecha:</strong> ${data.createdAt ? new Date(data.createdAt.toDate()).toLocaleString() : 'N/A'}</p>
+                            </div>
+                        `;
+                    });
+                }
+                
+                document.getElementById('details').innerHTML = content;
+                
+            } catch (error) {
+                console.error('Error obteniendo colección:', error);
+                alert(`❌ Error obteniendo colección: ${error.message}`);
+            }
+        }
+
+        // Hacer funciones disponibles globalmente
+        window.testConnection = testFirebaseConnection;
+        window.createTestPin = createTestPin;
+        window.viewCollection = viewCollection;
+    </script>
+</body>
+</html>
